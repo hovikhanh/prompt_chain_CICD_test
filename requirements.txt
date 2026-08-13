@@ -1,0 +1,8 @@
+# Lab 5: A-SDLC - AI Auto Fix CI/CD
+# Dependencies cho project
+
+# Testing
+pytest>=7.4.0
+
+# HTTP client (dùng để gọi AI API)
+requests>=2.31.0
