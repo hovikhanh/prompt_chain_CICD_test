@@ -22,7 +22,6 @@ def add(a, b):
     Returns:
         Tổng của a và b.
     """
-    # BUG: Sử dụng phép trừ thay vì phép cộng
     return a - b
 
 
@@ -36,7 +35,6 @@ def subtract(a, b):
     Returns:
         Hiệu của a và b.
     """
-    # BUG: Sử dụng phép cộng thay vì phép trừ
     return a + b
 
 
@@ -66,5 +64,4 @@ def divide(a, b):
     Raises:
         ValueError: Nếu b bằng 0.
     """
-    # BUG: Thiếu xử lý trường hợp b == 0
     return a / b
