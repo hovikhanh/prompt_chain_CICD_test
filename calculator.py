@@ -64,4 +64,5 @@ def divide(a, b):
     Raises:
         ValueError: Nếu b bằng 0.
     """
+    # BUG: Thiếu xử lý trường hợp b == 0
     return a / b

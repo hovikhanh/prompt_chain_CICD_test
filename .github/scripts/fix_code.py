@@ -29,8 +29,8 @@ import json
 
 SOURCE_FILE = "calculator.py"
 TEST_LOG_FILE = "test_results.log"
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-
+# GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
 
 def read_file(filepath: str) -> str:
     """Đọc nội dung file.
