@@ -1,0 +1,101 @@
+# =============================================================================
+# AI Auto Fix CI/CD Pipeline
+# =============================================================================
+# Lab 5: Xây dựng Quy trình Tự động (A-SDLC)
+#
+# Workflow này minh họa kỹ thuật Prompt Chaining (Chuỗi Lặp lại):
+# 1. Chạy pytest → phát hiện lỗi
+# 2. Gửi mã nguồn lỗi + log lỗi → AI API
+# 3. Nhận mã đã sửa → ghi đè file
+# 4. Chạy lại pytest → kiểm tra kết quả
+# 5. Báo cáo trạng thái cuối cùng
+# =============================================================================
+
+name: AI Auto Fix CI
+
+on:
+  push:
+    branches: ["*"]
+    paths:
+      - "calculator.py"
+      - "test_calculator.py"
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:  # Cho phép chạy thủ công
+
+jobs:
+  test-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # ----- BƯỚC 1: CHECKOUT & SETUP -----
+      - name: "📥 Check out code"
+        uses: actions/checkout@v4
+
+      - name: "🐍 Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "📦 Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ----- BƯỚC 2: CHẠY TEST LẦN 1 -----
+      - name: "🧪 Run tests (lần 1)"
+        id: first_test
+        continue-on-error: true
+        run: |
+          echo "========================================="
+          echo "🔍 Chạy pytest lần 1..."
+          echo "========================================="
+          pytest test_calculator.py -v > test_results.log 2>&1
+          cat test_results.log
+
+      # ----- BƯỚC 3: GỌI AI ĐỂ SỬA LỖI (nếu test thất bại) -----
+      - name: "🤖 Gọi AI để sửa lỗi"
+        if: steps.first_test.outcome == 'failure'
+        run: |
+          echo "========================================="
+          echo "❌ Tests thất bại! Đang gọi AI để sửa lỗi..."
+          echo "========================================="
+          python .github/scripts/fix_code.py
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+
+      # ----- BƯỚC 4: CHẠY TEST LẦN 2 (sau khi AI sửa) -----
+      - name: "🧪 Run tests (lần 2 - sau khi AI sửa)"
+        if: steps.first_test.outcome == 'failure'
+        id: second_test
+        continue-on-error: true
+        run: |
+          echo "========================================="
+          echo "🔍 Chạy pytest lần 2 sau khi AI sửa lỗi..."
+          echo "========================================="
+          pytest test_calculator.py -v
+
+      # ----- BƯỚC 5: BÁO CÁO KẾT QUẢ -----
+      - name: "📊 Báo cáo kết quả cuối cùng"
+        run: |
+          echo "========================================="
+          echo "📊 BÁO CÁO KẾT QUẢ"
+          echo "========================================="
+
+          if [ "${{ steps.first_test.outcome }}" == "success" ]; then
+            echo "✅ Tất cả tests đã PASS ngay từ lần chạy đầu tiên!"
+            echo "📋 Không cần AI can thiệp."
+          elif [ "${{ steps.second_test.outcome }}" == "success" ]; then
+            echo "🤖 AI đã SỬA THÀNH CÔNG mã nguồn!"
+            echo "📋 Tests đã PASS sau khi AI can thiệp."
+            echo ""
+            echo "📝 Nội dung calculator.py sau khi AI sửa:"
+            echo "-----------------------------------------"
+            cat calculator.py
+          else
+            echo "❌ AI KHÔNG THỂ sửa lỗi. Cần can thiệp thủ công."
+            echo "📋 Vui lòng kiểm tra log và sửa lỗi manually."
+            exit 1
+          fi
